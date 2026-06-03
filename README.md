@@ -8,6 +8,18 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
  - <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript Badge"/> - the main programming language for the frontend and backend development.
  - <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js Badge"/> - the runtime environment for executing JavaScript on the server-side.
  
+## Roadmap
+- [ ] Implement real-time data collection for different metrics
+    - [ ] CPU usage
+    - [x] Memory consumption
+    - [ ] Disk activity
+    - [ ] Research how to monitor Network performance as not included in os module
+- [ ] Implement a live server that will have the different requests for the different metrics
+- [ ] Create a frontend interface to display the performance metrics in real-time
+- [ ] Add functionality for users to choose time frames for data visualization (e.g. 5 minutes ago, last hour, last 24 hours)
+- [ ] Implement a threshold alert system that allows users to set a threshold of different values and the dashboard will show realtime if the value is above or below the threshold and give a email or text alert when the threshold is breached
+- [ ] Optimize the performance of the tracker to ensure it does not significantly impact system resources (e.g. optimising data storage by having it average out the raw data every hour and only keep the averaged data for long-term storage)
+
 
 ## Getting started
 (Instructions will be added once project is more developed)
