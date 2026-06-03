@@ -18,7 +18,7 @@ function time() {
 const intervalId = setInterval(() => {
     let totalMemory = os.totalmem()
     let freeMemory = os.freemem()
-    const memoryUsage = 100 - ((freeMemory / totalMemory) * 100)
+    const memoryUsage = 100 - ((freeMemory / totalMemory) * 100).toFixed(2)
     console.log(`Total Number of memory used: ${memoryUsage.toFixed(2)}% taken every ${2000 / 1000} seconds, Taken at ${time()}`);
 
     (async () => {
