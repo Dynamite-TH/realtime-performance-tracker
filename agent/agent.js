@@ -15,7 +15,7 @@ function time() {
 
 }
 
-setInterval(() => {
+const intervalId = setInterval(() => {
     let totalMemory = os.totalmem()
     let freeMemory = os.freemem()
     const memoryUsage = 100 - ((freeMemory / totalMemory) * 100)
@@ -30,13 +30,21 @@ setInterval(() => {
                 },
                 body: JSON.stringify({
                     timestamp: new Date(),
-                    cpuUsage: 0, // set to 0 for now while implimentation is being done
+                    cpuUsage: 0, // set to 0 for now while implementation is being done
                     memoryUsagePercentage: memoryUsage
                 })
             })
+
+            if (!response.ok) {
+                console.error(`Server responded with status ${response.status}; stopping metrics interval.`)
+                clearInterval(intervalId)
+                return
+            }
+
             console.log(`Metrics sent with status ${response.status}`)
         } catch (e) {
-            console.log(e)
+            console.error('Error sending metrics; stopping interval.', e)
+            clearInterval(intervalId)
         }
     })()
 
