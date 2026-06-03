@@ -5,8 +5,9 @@ This project is a work in progress real-time performance tracker that will allow
 This tracker will be helpful in server settings in a way of monitoring the performance of applications and services, identifying bottlenecks, and optimizing resource allocation. It will also be useful for developers and system administrators to ensure that their applications are running efficiently and to troubleshoot performance issues.
 
 ## Technologies Used
- - JavaScript - the main programming language for the frontend and backend development.
- - Node.js - the runtime environment for executing JavaScript on the server-side.
+ - <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript Badge"/> - the main programming language for the frontend and backend development.
+ - <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js Badge"/> - the runtime environment for executing JavaScript on the server-side.
+ 
 
 ## Getting started
 (Instructions will be added once project is more developed)
