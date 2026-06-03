@@ -30,7 +30,7 @@ setInterval(() => {
                 },
                 body: JSON.stringify({
                     timestamp: new Date(),
-                    cpuUsage: 5,
+                    cpuUsage: 0, // set to 0 for now while implimentation is being done
                     memoryUsagePercentage: memoryUsage
                 })
             })
