@@ -21,7 +21,7 @@ wss.on('connection', (ws) => {
 });
 
 app.post('/api/metrics', (req, res) => {
-    const { timestamp, cpuUsage, memoryUsagePercentage } = req.body || {};
+    const { timestamp, cpuUsage, memoryUsagePercentage, system_uptime } = req.body || {};
 
     // Validate the data quickly so we don't process garbage data
     if (cpuUsage === undefined || memoryUsagePercentage === undefined) {
@@ -34,7 +34,12 @@ app.post('/api/metrics', (req, res) => {
             client.send(stringifiedData);
         }
     });
-    console.log(cpuUsage, memoryUsagePercentage, timestamp)
+    const uptimeDays = Math.floor(system_uptime / (60 * 60 * 24));
+    const uptimeHours = Math.floor((system_uptime % (60 * 60 * 24)) / (60 * 60));
+    const uptimeMinutes = Math.floor((system_uptime % (60 * 60)) / 60);
+    const uptimeSeconds = Math.floor(system_uptime % 60);
+    const uptime = `${uptimeDays} Days, ${uptimeHours} hours, ${uptimeMinutes} minutes, ${uptimeSeconds} seconds`
+    console.log(cpuUsage, memoryUsagePercentage, timestamp, uptime)
     // Acknowledge receipt to the Agent immediately with a 202 Accepted status
     // 202 means: "We received it and are processing it, no need to wait around."
     res.status(202).send({ status: 'Metrics logged and broadcasted' });
