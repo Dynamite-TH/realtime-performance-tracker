@@ -1,0 +1,56 @@
+const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+const wsUrl = `${protocol}://localhost:3000`;
+
+const connectionStatus = document.getElementById('connectionStatus');
+const cpuUsageEl = document.getElementById('cpuUsage');
+const memoryUsageEl = document.getElementById('memoryUsage');
+const memoryCardEl = document.getElementById('memoryCard');
+const diskUsageEl = document.getElementById('diskUsage');
+const diskCardEl = document.getElementById('diskCard');
+const uptimeEl = document.getElementById('uptime');
+const timestampEl = document.getElementById('timestamp');
+document.getElementById('wsUrl').textContent = wsUrl;
+
+let showMemoryFreeOverTotal = false;
+let latestFreeMemory = null;
+let latestTotalMemory = null;
+let showDiskUsedOverTotal = false;
+let latestDiskUsage = null;
+let latestDiskSize = null;
+
+function connect() {
+    const socket = new WebSocket(wsUrl);
+
+    socket.addEventListener('open', () => {
+        connectionStatus.textContent = 'Connected';
+    });
+
+    socket.addEventListener('message', (event) => {
+        const data = JSON.parse(event.data);
+
+        cpuUsageEl.textContent = formatPercent(data.cpuUsage);
+        latestFreeMemory = data.memory?.freeMemory;
+        latestTotalMemory = data.memory?.totalMemory;
+        renderMemoryUsage();
+
+        latestDiskUsage = data.disk?.diskUsage;
+        latestDiskSize = data.disk?.diskSize;
+        renderDiskUsage();
+        uptimeEl.textContent = `$${Math.floor((data.system_uptime || 0) / 60)} min`;
+        timestampEl.textContent = data.timestamp
+            ? new Date(data.timestamp).toLocaleString()
+            : '--';
+    });
+
+    socket.addEventListener('close', () => {
+        connectionStatus.textContent = 'Disconnected, retrying...';
+        setTimeout(connect, 2000);
+    });
+
+    socket.addEventListener('error', () => {
+        connectionStatus.textContent = 'Connection error';
+        socket.close();
+    });
+}
+
+connect();
