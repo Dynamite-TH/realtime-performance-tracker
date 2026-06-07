@@ -37,6 +37,28 @@ function formatBytes(bytes) {
     return `${size.toFixed(2)} ${units[unitIndex]}`;
 }
 
+function renderMemoryUsage() {
+    if (typeof latestFreeMemory !== 'number' || typeof latestTotalMemory !== 'number') {
+        memoryUsageEl.textContent = '--';
+        return;
+    }
+
+    if (!showMemoryFreeOverTotal) {
+        const memoryUsage = 100 - (latestFreeMemory / latestTotalMemory) * 100;
+        memoryUsageEl.textContent = formatPercent(memoryUsage);
+        return;
+    }
+
+    memoryUsageEl.textContent = `${formatBytes(latestFreeMemory)} / ${formatBytes(latestTotalMemory)}`;
+}
+
+
+
+memoryCardEl.addEventListener('click', () => {
+    showMemoryFreeOverTotal = !showMemoryFreeOverTotal;
+    renderMemoryUsage();
+});
+
 function connect() {
     const socket = new WebSocket(wsUrl);
 
