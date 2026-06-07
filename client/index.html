@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realtime Metrics Dashboard</title>
+</head>
+
+<body>
+    <main class="container">
+        <h1>Metrics Dashboard</h1>
+        <p class="subtitle">Live system metrics streamed from the agent.</p>
+        <p id="connectionStatus" class="status">Connecting...</p>
+
+        <section class="grid">
+            <article class="card">
+                <p class="label">CPU Usage</p>
+                <p class="value" id="cpuUsage">--</p>
+            </article>
+            <article class="card clickable" id="memoryCard">
+                <p class="label">Memory Usage</p>
+                <p class="value" id="memoryUsage">--</p>
+            </article>
+            <article class="card clickable" id="diskCard">
+                <p class="label">Disk Usage</p>
+                <p class="value" id="diskUsage">--</p>
+            </article>
+            <article class="card">
+                <p class="label">System Uptime</p>
+                <p class="value" id="uptime">--</p>
+            </article>
+            <article class="card">
+                <p class="label">Last Updated</p>
+                <p class="value" id="timestamp">--</p>
+            </article>
+        </section>
+
+        <p class="muted">Listening on <span id="wsUrl"></span></p>
+    </main>
+
+</body>
+
+</html>
