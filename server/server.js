@@ -1,14 +1,14 @@
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
+import express, { json } from 'express';
+import { createServer } from 'http';
+import WebSocket, { WebSocketServer } from 'ws';
 
 
 const app = express();
-app.use(express.json()); // Middleware to parse incoming JSON payloads
+app.use(json()); // Middleware to parse incoming JSON payloads
 
 // 2. Setup HTTP & WebSocket Server together
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const server = createServer(app);
+const wss = new WebSocketServer({ server });
 
 // Track connected frontend clients
 let connectedClients = [];
@@ -21,10 +21,10 @@ wss.on('connection', (ws) => {
 });
 
 app.post('/api/metrics', (req, res) => {
-    const { timestamp, cpuUsage, memoryUsagePercentage, system_uptime } = req.body || {};
+    const { timestamp, cpuUsage, memory, disk, system_uptime } = req.body || {};
 
     // Validate the data quickly so we don't process garbage data
-    if (cpuUsage === undefined || memoryUsagePercentage === undefined) {
+    if (cpuUsage === undefined || memory === undefined || disk === undefined) {
         return res.status(400).json({ error: 'Missing required metric fields' });
     }
 
@@ -39,7 +39,7 @@ app.post('/api/metrics', (req, res) => {
     const uptimeMinutes = Math.floor((system_uptime % (60 * 60)) / 60);
     const uptimeSeconds = Math.floor(system_uptime % 60);
     const uptime = `${uptimeDays} Days, ${uptimeHours} hours, ${uptimeMinutes} minutes, ${uptimeSeconds} seconds`
-    console.log(cpuUsage, memoryUsagePercentage, timestamp, uptime)
+    console.log(cpuUsage, memory.memoryUsage, disk.diskUsage, timestamp, uptime)
     // Acknowledge receipt to the Agent immediately with a 202 Accepted status
     // 202 means: "We received it and are processing it, no need to wait around."
     res.status(202).send({ status: 'Metrics logged and broadcasted' });
