@@ -5,13 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./agent/agent.js",
+    "agent": "node ./agent/agent.js",
     "server": "node ./server/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "eslint": "^10.4.1",
     "prettier": "^3.8.3"
