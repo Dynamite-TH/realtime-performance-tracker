@@ -17,6 +17,9 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
 - [x] Implement a live server that will have the different requests for the different metrics
 - [ ] Create a frontend interface to display the performance metrics in real-time
 - [ ] Add functionality for users to choose time frames for data visualization (e.g. 5 minutes ago, last hour, last 24 hours)
+- [ ] Implement a IndexedDb database to store the performance data locally
+### Improved Features
+- [ ] Implement data visualization using charts and graphs to make it easier for users to understand the performance metrics
 - [ ] Implement a threshold alert system that allows users to set a threshold of different values and the dashboard will show realtime if the value is above or below the threshold and give a email or text alert when the threshold is breached
 - [ ] Optimize the performance of the tracker to ensure it does not significantly impact system resources (e.g. optimising data storage by having it average out the raw data every hour and only keep the averaged data for long-term storage)
 
