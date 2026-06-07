@@ -11,6 +11,9 @@ const uptimeEl = document.getElementById('uptime');
 const timestampEl = document.getElementById('timestamp');
 document.getElementById('wsUrl').textContent = wsUrl;
 
+const maxReconnectAttempts = 5;
+let reconnectAttempts = 0;
+
 let showMemoryFreeOverTotal = false;
 let latestFreeMemory = null;
 let latestTotalMemory = null;
@@ -89,6 +92,7 @@ function connect() {
     const socket = new WebSocket(wsUrl);
 
     socket.addEventListener('open', () => {
+        reconnectAttempts = 0;
         connectionStatus.textContent = 'Connected';
     });
 
@@ -111,7 +115,13 @@ function connect() {
     });
 
     socket.addEventListener('close', () => {
-        connectionStatus.textContent = 'Disconnected, retrying...';
+        if (reconnectAttempts >= maxReconnectAttempts) {
+            connectionStatus.textContent = 'Disconnected: Retry limit reached. Server Offline';
+            return;
+        }
+
+        reconnectAttempts += 1;
+        connectionStatus.textContent = `Disconnected, retrying (${reconnectAttempts}/${maxReconnectAttempts})...`;
         setTimeout(connect, 2000);
     });
 
