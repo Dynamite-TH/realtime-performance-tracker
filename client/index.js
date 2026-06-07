@@ -67,6 +67,14 @@ function renderDiskUsage() {
     diskUsageEl.textContent = `${formatBytes(usedBytes)} / ${formatBytes(latestDiskSize)}`;
 }
 
+function uptimeFormat(system_uptime) {
+    const uptimeHours = Math.floor(system_uptime / (60 * 60));
+    const uptimeMinutes = Math.floor((system_uptime % (60 * 60)) / 60);
+    const uptimeSeconds = Math.floor(system_uptime % 60);
+    const uptime = `${uptimeHours} hrs, ${uptimeMinutes} mins, ${uptimeSeconds} secs`
+    return uptime
+}
+
 diskCardEl.addEventListener('click', () => {
     showDiskUsedOverTotal = !showDiskUsedOverTotal;
     renderDiskUsage();
@@ -95,7 +103,8 @@ function connect() {
         latestDiskUsage = data.disk?.diskUsage;
         latestDiskSize = data.disk?.diskSize;
         renderDiskUsage();
-        uptimeEl.textContent = `$${Math.floor((data.system_uptime || 0) / 60)} min`;
+        const uptime = (uptimeFormat(data.system_uptime))
+        uptimeEl.textContent = uptime;
         timestampEl.textContent = data.timestamp
             ? new Date(data.timestamp).toLocaleString()
             : '--';
