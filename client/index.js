@@ -52,7 +52,25 @@ function renderMemoryUsage() {
     memoryUsageEl.textContent = `${formatBytes(latestFreeMemory)} / ${formatBytes(latestTotalMemory)}`;
 }
 
+function renderDiskUsage() {
+    if (typeof latestDiskUsage !== 'number' || typeof latestDiskSize !== 'number') {
+        diskUsageEl.textContent = '--';
+        return;
+    }
 
+    if (!showDiskUsedOverTotal) {
+        diskUsageEl.textContent = formatPercent(latestDiskUsage);
+        return;
+    }
+
+    const usedBytes = latestDiskSize * (latestDiskUsage / 100);
+    diskUsageEl.textContent = `${formatBytes(usedBytes)} / ${formatBytes(latestDiskSize)}`;
+}
+
+diskCardEl.addEventListener('click', () => {
+    showDiskUsedOverTotal = !showDiskUsedOverTotal;
+    renderDiskUsage();
+});
 
 memoryCardEl.addEventListener('click', () => {
     showMemoryFreeOverTotal = !showMemoryFreeOverTotal;
