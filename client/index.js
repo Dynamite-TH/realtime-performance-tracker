@@ -18,6 +18,25 @@ let showDiskUsedOverTotal = false;
 let latestDiskUsage = null;
 let latestDiskSize = null;
 
+function formatPercent(value) {
+    if (typeof value !== 'number' || Number.isNaN(value)) return '--';
+    return `${value.toFixed(2)}%`;
+}
+
+function formatBytes(bytes) {
+    if (typeof bytes !== 'number' || Number.isNaN(bytes)) return '--';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let size = bytes;
+    let unitIndex = 0;
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex += 1;
+    }
+
+    return `${size.toFixed(2)} ${units[unitIndex]}`;
+}
+
 function connect() {
     const socket = new WebSocket(wsUrl);
 
