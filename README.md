@@ -10,11 +10,11 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
  
 ## Roadmap
 - [ ] Implement real-time data collection for different metrics
-    - [ ] CPU usage
+    - [x] CPU usage
     - [x] Memory consumption
-    - [ ] Disk activity
+    - [x] Disk activity
     - [ ] Research how to monitor Network performance as not included in os module
-- [ ] Implement a live server that will have the different requests for the different metrics
+- [x] Implement a live server that will have the different requests for the different metrics
 - [ ] Create a frontend interface to display the performance metrics in real-time
 - [ ] Add functionality for users to choose time frames for data visualization (e.g. 5 minutes ago, last hour, last 24 hours)
 - [ ] Implement a threshold alert system that allows users to set a threshold of different values and the dashboard will show realtime if the value is above or below the threshold and give a email or text alert when the threshold is breached
