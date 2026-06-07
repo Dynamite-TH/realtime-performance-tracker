@@ -9,13 +9,13 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
  - <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js Badge"/> - the runtime environment for executing JavaScript on the server-side.
  
 ## Roadmap
-- [ ] Implement real-time data collection for different metrics
+- [x] Implement real-time data collection for different metrics
     - [x] CPU usage
     - [x] Memory consumption
     - [x] Disk activity
     - [ ] Research how to monitor Network performance as not included in os module
 - [x] Implement a live server that will have the different requests for the different metrics
-- [ ] Create a frontend interface to display the performance metrics in real-time
+- [x] Create a frontend interface to display the performance metrics in real-time
 - [ ] Add functionality for users to choose time frames for data visualization (e.g. 5 minutes ago, last hour, last 24 hours)
 - [ ] Implement a IndexedDb database to store the performance data locally
 ### Improved Features
