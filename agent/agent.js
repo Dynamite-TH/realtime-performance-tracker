@@ -1,17 +1,17 @@
-const os = require('os');
-const { cpuUsage } = require('process');
+import { cpus as _cpus, totalmem, freemem, uptime as _uptime } from 'os';
+import { statfs } from 'node:fs/promises';
 
 let URL = 'http://localhost:3000/api/metrics'
 
 const interval = 2000 // 18000 seconds / 30 mins
 
 function cpuIdle() {
-    const cpus = os.cpus();
+    const cpus = _cpus();
     let totalMs = 0;
     let idleMs = 0;
 
     cpus.forEach((core) => {
-        for (type in core.times) {
+        for (let type in core.times) {
             totalMs += core.times[type];
         }
         idleMs += core.times.idle;
@@ -38,13 +38,31 @@ function getCpuUsage() {
     });
 }
 
+
+
+async function getDiskavailable() {
+    const stats = await statfs('/');
+    return stats.bsize * stats.bavail;
+}
+
+async function getDiskSize() {
+    const stats = await statfs('/');
+    return stats.bsize * stats.blocks
+}
+const diskSize = await getDiskSize()
+const totalMemory = totalmem()
+
 const intervalId = setInterval(async () => {
     const cpuUsage = await getCpuUsage()
-    let totalMemory = os.totalmem()
-    let freeMemory = os.freemem()
+
+    const diskavailable = await getDiskavailable()
+    const diskUsage = (1 - diskavailable / diskSize) * 100
+
+    const freeMemory = freemem()
     const memoryUsage = (100 - ((freeMemory / totalMemory) * 100))
-    const uptime = os.uptime()
-    console.log(`Total Number of memory used: ${memoryUsage}%, total cpu usage ${cpuUsage}%, Taken at ${new Date()}`);
+
+    const uptime = _uptime()
+    console.log(`Total Number of memory used: ${memoryUsage}%, total cpu usage ${cpuUsage}%, avaialble bytes ${diskUsage}, total bytes ${diskSize}, storage used ${diskUsage}%, Taken at ${new Date()}, `);
 
 
     (async () => {
@@ -56,9 +74,11 @@ const intervalId = setInterval(async () => {
                 },
                 body: JSON.stringify({
                     timestamp: new Date(),
-                    cpuUsage: cpuUsage, // set to 0 for now while implementation is being done
-                    memoryUsagePercentage: memoryUsage,
+                    cpuUsage: cpuUsage,
+                    memory: { totalMemory: totalMemory, freeMemory: freeMemory, memoryUsage: memoryUsage },
+                    disk: { diskUsage: diskUsage, diskSize: diskSize, diskUsage: diskUsage },
                     system_uptime: uptime
+
                 })
             })
 
