@@ -57,12 +57,15 @@
             font-size: 0.85rem;
             color: #6b7280;
             margin-bottom: 8px;
+            text-align: center;
         }
 
         .value {
             font-size: 0.85rem;
             font-weight: 700;
+            text-align: center;
         }
+
         .click-hint {
             font-size: 0.5rem;
             text-align: right;
