@@ -9,6 +9,7 @@ const diskUsageEl = document.getElementById('diskUsage');
 const diskCardEl = document.getElementById('diskCard');
 const uptimeEl = document.getElementById('uptime');
 const timestampEl = document.getElementById('timestamp');
+const retry = document.getElementById('retry')
 document.getElementById('wsUrl').textContent = wsUrl;
 
 const maxReconnectAttempts = 5;
@@ -88,6 +89,12 @@ memoryCardEl.addEventListener('click', () => {
     renderMemoryUsage();
 });
 
+retry.addEventListener('click', () => {
+    retry.hidden = true;
+    connectionStatus.textContent = 'Manually Connecting...'
+    connect();
+});
+
 function connect() {
     const socket = new WebSocket(wsUrl);
 
@@ -117,6 +124,8 @@ function connect() {
     socket.addEventListener('close', () => {
         if (reconnectAttempts >= maxReconnectAttempts) {
             connectionStatus.textContent = 'Disconnected: Retry limit reached. Server Offline';
+            retry.hidden = false;
+            socket.close()
             return;
         }
 
