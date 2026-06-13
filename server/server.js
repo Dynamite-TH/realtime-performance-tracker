@@ -42,7 +42,7 @@ app.post('/api/metrics', (req, res) => {
 });
 
 
-// Start the unified server on port 3000
-server.listen(3000, () => {
-    console.log('Ingestion server listening on port 3000');
+// Start the unified server on port 3030
+server.listen(3030, () => {
+    console.log('Ingestion server listening on port 3030');
 });
