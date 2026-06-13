@@ -1,7 +1,7 @@
 import { cpus as _cpus, totalmem, freemem, uptime as _uptime } from 'os';
 import { statfs } from 'node:fs/promises';
 
-let URL = 'http://localhost:3000/api/metrics'
+let URL = 'http://localhost:3030/api/metrics'
 
 const interval = 2000 // 18000 seconds / 30 mins
 
