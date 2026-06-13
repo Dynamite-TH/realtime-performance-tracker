@@ -1,5 +1,5 @@
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = `${protocol}://localhost:3000`;
+const wsUrl = `${protocol}://localhost:3030`;
 
 const connectionStatus = document.getElementById('connectionStatus');
 const cpuUsageEl = document.getElementById('cpuUsage');
@@ -52,8 +52,8 @@ function renderMemoryUsage() {
         memoryUsageEl.textContent = formatPercent(memoryUsage);
         return;
     }
-
-    memoryUsageEl.textContent = `${formatBytes(latestFreeMemory)} / ${formatBytes(latestTotalMemory)}`;
+    const usedMemory = latestTotalMemory - latestFreeMemory;
+    memoryUsageEl.textContent = `${formatBytes(usedMemory)} / ${formatBytes(latestTotalMemory)}`;
 }
 
 function renderDiskUsage() {
@@ -94,6 +94,15 @@ retry.addEventListener('click', () => {
     connectionStatus.textContent = 'Manually Connecting...'
     connect();
 });
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registered!', reg))
+            .catch(err => console.err('Service Worker registration failed', err));
+    });
+}
+
 
 function connect() {
     const socket = new WebSocket(wsUrl);
@@ -139,5 +148,6 @@ function connect() {
         socket.close();
     });
 }
+
 
 connect();
