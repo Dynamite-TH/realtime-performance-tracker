@@ -1,2 +1,4 @@
 express
 ws
+pg
+dotenv
