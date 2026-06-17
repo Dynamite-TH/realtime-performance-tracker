@@ -71,47 +71,48 @@ const intervalId = setInterval(async () => {
         memory: { totalMemory: totalMemory, freeMemory: freeMemory, memoryUsage: memoryUsage },
         disk: { diskUsage: diskUsage, diskSize: diskSize, diskUsage: diskUsage },
         system_uptime: uptime
-    }
+    };
 
-        (async () => {
-            try {
-                if (localQueue.length > 0) {
-                    console.log("sending existing backlog payload")
-                    const response = await fetch(URL, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(localQueue)
-                    })
-                    if (response.ok) {
-                        localQueue = [] //local queue needs to be flushed after pushed
-                    }
-                }
+    (async () => {
+        try {
+            if (localQueue.length > 0) {
+                console.log("sending existing backlog payload")
                 const response = await fetch(URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(localQueue)
                 })
-
-                if (!response.ok) {
-                    console.error(`Server responded with status ${response.status}; stopping metrics interval.`)
+                if (response.ok) {
+                    localQueue = [] //local queue needs to be flushed after pushed
                 }
-
-                console.log(`Metrics sent with status ${response.status}`)
-            } catch (e) {
-                const MAX_QUEUE_SIZE = 10000 //average around 5.5 hours of data that can be saved
-                console.error('Error sending metrics;', (e.message))
-                if (localQueue.length >= MAX_QUEUE_SIZE) {
-                    // Drop the OLDEST data point (index 0) to free up space
-                    localQueue.shift();
-                    console.warn('Queue limit reached! Dropped oldest metric to save RAM.');
-                }
-                localQueue.push()
-
             }
-        })()
+            const response = await fetch(URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+
+            if (!response.ok) {
+                console.error(`Server responded with status ${response.status}; stopping metrics interval.`)
+            }
+
+            console.log(`Metrics sent with status ${response.status}`)
+        } catch (e) {
+            const MAX_QUEUE_SIZE = 10000 //average around 5.5 hours of data that can be saved - can be scaled using a local database to save it all before pushing to main server
+            console.error('Error sending metrics;', (e.message), '; Payload backlogged')
+            if (localQueue.length >= MAX_QUEUE_SIZE) {
+                // Drop the OLDEST data point to free up space
+                localQueue.shift();
+                console.warn('Queue limit reached! Dropped oldest metric to save RAM.');
+            }
+            localQueue.push(payload)
+            // console.log(localQueue)
+
+        }
+    })()
 
 }, interval);
