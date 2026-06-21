@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sysmonitor-v1';
+const CACHE_NAME = 'sysmonitor-v2';
 const ASSETS = [
     './index.html',
     './stylesheet.css',

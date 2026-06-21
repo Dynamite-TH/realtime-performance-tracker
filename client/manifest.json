@@ -1,4 +1,5 @@
 {
+  "version": 1.0,
   "name": "Realtime System Performance Tracker",
   "short_name": "RTS Performance Tracker",
   "start_url": "./index.html",

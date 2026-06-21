@@ -40,6 +40,12 @@ app.use(json()); // Middleware to parse incoming JSON payloads
 // Serve client static files when present (so the app container can serve the UI)
 const clientDir = path.join(__dirname, '..', 'client');
 if (fs.existsSync(clientDir)) {
+    app.use((req, res, next) => {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        next();
+    });
     app.use(express.static(clientDir));
     app.get('/', (req, res) => res.sendFile(path.join(clientDir, 'index.html')));
 }
