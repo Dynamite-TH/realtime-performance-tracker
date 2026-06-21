@@ -1,6 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import express, { json } from 'express';
+import fs from 'fs';
 import { createServer } from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 import { Pool } from 'pg';
@@ -9,11 +10,21 @@ import PDFDocument from 'pdfkit';
 
 
 
-// dotenv file reade
+// dotenv file reader (prefer Docker / environment variables)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, 'config.env') });
-//end of file reader
+// Load local config.env only if DB_HOST isn't provided (so containers supply DB creds)
+try {
+    if (!process.env.DB_HOST) {
+        const envPath = path.join(__dirname, 'config.env');
+        if (fs.existsSync(envPath)) {
+            dotenv.config({ path: envPath });
+        }
+    }
+} catch (e) {
+    // ignore and continue with process.env
+}
+// end of file reader
 // postgres login details
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -25,6 +36,13 @@ const pool = new Pool({
 // console.log(typeof process.env.DB_PASSWORD, process.env.DB_PASSWORD);
 const app = express();
 app.use(json()); // Middleware to parse incoming JSON payloads
+
+// Serve client static files when present (so the app container can serve the UI)
+const clientDir = path.join(__dirname, '..', 'client');
+if (fs.existsSync(clientDir)) {
+    app.use(express.static(clientDir));
+    app.get('/', (req, res) => res.sendFile(path.join(clientDir, 'index.html')));
+}
 
 // creation of server and websocket
 const server = createServer(app);
