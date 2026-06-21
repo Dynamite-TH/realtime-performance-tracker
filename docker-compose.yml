@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   db:
     image: timescale/timescaledb:2.16.1-pg16
@@ -10,8 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - timescale_data:/var/lib/postgresql/data
-      # optional: run schema on first startup
-      # - ./server/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./server/database/database.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d realtime_tracker"]
       interval: 5s
@@ -34,6 +34,17 @@ services:
       DB_DATABASE: realtime_tracker
     ports:
       - "3030:3030"
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    container_name: rpt-agent
+    depends_on:
+      - app
+    environment:
+      API_URL: http://app:3030/api/metrics
     restart: unless-stopped
 
 volumes:
