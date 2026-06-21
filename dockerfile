@@ -2,11 +2,11 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY server/package*.json ./server/
-WORKDIR /app/server
+# Install dependencies from the project root package.json
+COPY package*.json ./
 RUN npm ci --omit=dev
 
-WORKDIR /app
+# Copy application source
 COPY server/ ./server/
 COPY client/ ./client/
 

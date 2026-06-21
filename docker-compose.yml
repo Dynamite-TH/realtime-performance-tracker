@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   db:
     image: timescale/timescaledb:2.16.1-pg16
@@ -34,17 +33,6 @@ services:
       DB_DATABASE: realtime_tracker
     ports:
       - "3030:3030"
-    restart: unless-stopped
-
-  agent:
-    build:
-      context: .
-      dockerfile: agent/Dockerfile
-    container_name: rpt-agent
-    depends_on:
-      - app
-    environment:
-      API_URL: http://app:3030/api/metrics
     restart: unless-stopped
 
 volumes:
