@@ -17,6 +17,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS server_health_hourly_avg
 WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('1 hour', time) AS hourly_bucket,
+    COUNT(*) AS record_count,
     AVG(cpu_usage) AS avg_cpu,
     MAX(cpu_usage) AS max_cpu,
     AVG(memory_usage_percent) AS avg_memory,
