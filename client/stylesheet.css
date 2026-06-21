@@ -43,6 +43,16 @@
         background-color: red;
         }
 
+    #report {
+        /* Style it to match your nice cards */
+        background-color: #1e293b;
+        color: white;
+        padding: 12px 24px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

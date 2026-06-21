@@ -1,5 +1,6 @@
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = `${protocol}://localhost:3030`;
+const reportButton = document.getElementById('Report');
 
 const connectionStatus = document.getElementById('connectionStatus');
 const cpuUsageEl = document.getElementById('cpuUsage');
@@ -11,6 +12,12 @@ const uptimeEl = document.getElementById('uptime');
 const timestampEl = document.getElementById('timestamp');
 const retry = document.getElementById('retry')
 document.getElementById('wsUrl').textContent = wsUrl;
+
+if (reportButton) {
+    reportButton.addEventListener('click', () => {
+        window.open('/api/reports/download-24h', '_blank', 'noopener,noreferrer');
+    });
+}
 
 const maxReconnectAttempts = 5;
 let reconnectAttempts = 0;
