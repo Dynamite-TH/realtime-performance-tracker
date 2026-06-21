@@ -25,7 +25,7 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
 
 
 ## Getting started
-1. Clone the repository to your local machine using `git clone <repository-url>`.
+1. Clone the repository to your local machine using `git clone https://github.com/Dynamite-TH/realtime-performance-tracker.git`.
 2. Install the required dependencies using `npm install`.
 3. using docker-compose up --build from root directory to start the server and frontend. Alternatively, you can run the server and frontend separately using `npm start` from root directory.
 4. In the terminal from the root directory, run `npm run agent` to start the agent on the device.
