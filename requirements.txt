@@ -2,3 +2,4 @@ express
 ws
 pg
 dotenv
+pdfkit
