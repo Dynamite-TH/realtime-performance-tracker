@@ -29,7 +29,7 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
 2. Install the required dependencies using `npm install`.
 3. using docker-compose up --build from root directory to start the server and frontend. Alternatively, you can run the server and frontend separately using `npm start` from root directory.
 4. In the terminal from the root directory, run `npm run agent` to start the agent on the device.
-5. Open your web browser and navigate to `http://localhost:3000` to access the performance tracker dashboard.
+5. Open your web browser and navigate to `http://localhost:3030` to access the performance tracker dashboard.
 6. See the realtime performance metrics being displayed on the dashboard.
 
 ## Contact
