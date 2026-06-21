@@ -96,6 +96,26 @@ app.post('/api/metrics', async (req, res) => {
 app.get('/api/reports/download-24h', async (req, res) => {
     const endTime = new Date();
     const startTime = new Date(endTime.getTime() - 24 * 60 * 60 * 1000);
+    const deviceTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const formatLocalDateTime = (value) => {
+        const date = new Date(value);
+        const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone: deviceTimeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        }).formatToParts(date);
+
+        const asMap = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+        return `${asMap.year}-${asMap.month}-${asMap.day} ${asMap.hour}:${asMap.minute}:${asMap.second}`;
+    };
+
+    const formatLocalHour = (value) => formatLocalDateTime(value).slice(0, 13);
 
     try {
         const { rows } = await pool.query(
@@ -109,7 +129,7 @@ app.get('/api/reports/download-24h', async (req, res) => {
                 avg_uptime
             FROM server_health_hourly_avg
             WHERE hourly_bucket >= $1 AND hourly_bucket < $2
-            ORDER BY hourly_bucket ASC`,
+            ORDER BY hourly_bucket desc`,
             [startTime, endTime]
         );
 
@@ -142,7 +162,7 @@ app.get('/api/reports/download-24h', async (req, res) => {
 
         doc.fontSize(20).fillColor('#0f172a').text('24-Hour System Performance Report', { align: 'center' });
         doc.moveDown(0.5);
-        doc.fontSize(10).fillColor('#475569').text(`Report range: ${startTime.toISOString()} to ${endTime.toISOString()}`, { align: 'center' });
+        doc.fontSize(10).fillColor('#475569').text(`Report range: ${formatLocalDateTime(startTime)} to ${formatLocalDateTime(endTime)} (${deviceTimeZone})`, { align: 'center' });
         doc.moveDown(1.5);
 
         doc.fontSize(12).fillColor('#0f172a').text('Summary');
@@ -164,21 +184,25 @@ app.get('/api/reports/download-24h', async (req, res) => {
             doc.fontSize(15).fillColor('#0f172a').text(card[1], x + 12, y + 22, { width: 206 });
         });
 
-        doc.y = summaryTop + 122;
+        const summaryRows = Math.ceil(cards.length / 2);
+        const summaryBottom = summaryTop + ((summaryRows - 1) * 54) + 44;
+        doc.y = summaryBottom + 24;
         doc.moveDown(1);
 
         if (rows.length === 0) {
             doc.fontSize(12).fillColor('#1d4ed8').text('No data was found for the last 24 hours.');
         } else {
-
+            doc.fontSize(12).fillColor('black').text('Data from last 24 hours', {
+                align: 'center'
+            });
             const startX = 40;
             const colWidths = [112, 55, 65, 65, 70, 65, 70];
-            const headers = ['Hour', 'Samples', 'Avg CPU', 'Max CPU', 'Avg Memory', 'Avg Disk', 'Avg Uptime'];
+            const headers = ['Hour', 'Samples', 'Avg CPU Usage', 'Max CPU Usage', 'Avg Memory Usage', 'Avg Disk Usage', 'Avg Uptime'];
 
             let currentY = doc.y;
             const drawRow = (values, isHeader = false) => {
                 let x = startX;
-                const rowHeight = 22;
+                const rowHeight = 30;
 
                 values.forEach((value, i) => {
                     doc.rect(x, currentY, colWidths[i], rowHeight).stroke('#cbd5e1');
@@ -194,7 +218,7 @@ app.get('/api/reports/download-24h', async (req, res) => {
             drawRow(headers, true);
             rows.forEach((row) => {
                 drawRow([
-                    new Date(row.hourly_bucket).toISOString().slice(0, 13).replace('T', ' '),
+                    formatLocalHour(row.hourly_bucket),
                     Number(row.record_count) || 0,
                     Number(row.avg_cpu).toFixed(2),
                     Number(row.max_cpu).toFixed(2),
