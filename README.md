@@ -17,7 +17,7 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
 - [x] Implement a live server that will have the different requests for the different metrics
 - [x] Create a frontend interface to display the performance metrics in real-time
 - [ ] Add functionality for users to choose time frames for data visualization (e.g. 5 minutes ago, last hour, last 24 hours)
-- [ ] Implement a IndexedDb database to store the performance data locally
+- [ ] Implement a ~~IndexedDb~~ Timescale PostgreSQL database to store the performance data locally
 ### Improved Features
 - [ ] Implement data visualization using charts and graphs to make it easier for users to understand the performance metrics
 - [ ] Implement a threshold alert system that allows users to set a threshold of different values and the dashboard will show realtime if the value is above or below the threshold and give a email or text alert when the threshold is breached
@@ -27,7 +27,7 @@ This tracker will be helpful in server settings in a way of monitoring the perfo
 ## Getting started
 1. Clone the repository to your local machine using `git clone https://github.com/Dynamite-TH/realtime-performance-tracker.git`.
 2. Install the required dependencies using `npm install`.
-3. using docker-compose up --build from root directory to start the server and frontend. Alternatively, you can run the server and frontend separately using `npm start` from root directory.
+3. using `docker-compose up --build` from root directory to start the server and frontend. Alternatively, you can run the server and frontend using `npm start server` from root directory.
 4. In the terminal from the root directory, run `npm run agent` to start the agent on the device.
 5. Open your web browser and navigate to `http://localhost:3030` to access the performance tracker dashboard.
 6. See the realtime performance metrics being displayed on the dashboard.
