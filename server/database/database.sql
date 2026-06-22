@@ -27,7 +27,7 @@ FROM server_health
 GROUP BY hourly_bucket;
 
 SELECT add_continuous_aggregate_policy('server_health_hourly_avg',
-    start_offset => INTERVAL '8 days',
+    start_offset => INTERVAL '5 days',
     end_offset => INTERVAL '1 hour',
     schedule_interval => INTERVAL '1 hour'
 );
