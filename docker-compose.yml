@@ -31,8 +31,9 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_DATABASE: realtime_tracker
-    ports:
-      - "3030:3030"
+    # REMOVED: ports: - "3030:3030"
+    # The app now ONLY listens on localhost:3000 (accessible only via SSH tunnel from local machine)
+    # The agent container communicates via Docker internal network (localhost:3000 within container)
     restart: unless-stopped
 
 volumes:
