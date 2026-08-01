@@ -178,7 +178,9 @@ app.get('/api/reports/download-24h', async (req, res) => {
         const overallAvgMemory = totals.samples ? totals.memorySum / totals.samples : 0;
         const overallAvgDisk = totals.samples ? totals.diskSum / totals.samples : 0;
 
-        res.setHeader('Content-Disposition', 'attachment; filename="system-performance-report-24h.pdf"');
+        const reportDate = new Date().toISOString().split('T')[0];
+
+        res.setHeader('Content-Disposition', `attachment; filename="system-performance-report-${reportDate}.pdf"`);
         res.setHeader('Content-Type', 'application/pdf');
 
         const doc = new PDFDocument({ size: 'A4', margin: 40 });
@@ -261,7 +263,12 @@ app.get('/api/reports/download-24h', async (req, res) => {
     }
 });
 
-// Start the unified server on port 3030
+// Start the unified server on port 3000
+// For Docker: Binds to 0.0.0.0:3000 (allows inter-container communication)
+// Security via SSH tunnel + no port exposure in docker-compose
+// For bare server: Would use 127.0.0.1:3000 instead
+const bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'; // Docker default
+const port = 3000;
 server.listen(3030, () => {
-    console.log('Ingestion server listening on port 3030');
+    console.log(`Ingestion server listening on http://${bindAddress}:${port} (SSH tunnel only)`);
 });

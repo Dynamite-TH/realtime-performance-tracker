@@ -1,5 +1,16 @@
-const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = `${protocol}://localhost:3030`;
+// SSH Tunnel Configuration
+// When using SSH tunnel: ssh -L 3000:127.0.0.1:3000 -p 55733 user@remote-server
+// The tunnel locally forwards localhost:3000 to the remote server's 127.0.0.1:3000
+// On the client, always connect to http://localhost:3000 which maps through the tunnel
+
+const determineWebSocketUrl = () => {
+    // Always use localhost for SSH tunnel - do NOT use remote hostname here
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = `${protocol}://localhost:3000`;
+    return wsUrl;
+};
+
+const wsUrl = determineWebSocketUrl();
 const reportButton = document.getElementById('Report');
 
 const connectionStatus = document.getElementById('connectionStatus');

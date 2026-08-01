@@ -2,6 +2,8 @@ import { cpus as _cpus, totalmem, freemem, uptime as _uptime } from 'os';
 import { statfs } from 'node:fs/promises';
 
 // Allow overriding the target API URL via environment (set in docker-compose as API_URL)
+// Inside Docker container: http://localhost:3000/api/metrics (same container network)
+// On remote server: http://127.0.0.1:3000/api/metrics (localhost only bindings)
 const URL = process.env.API_URL || 'http://localhost:3030/api/metrics'
 
 const interval = 2000 // 18000 seconds / 30 mins
