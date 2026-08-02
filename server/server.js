@@ -68,52 +68,89 @@ wss.on('connection', (ws) => {
     });
 });
 
+function aggregateQueueMetrics(queueArray) {
+    if (!Array.isArray(queueArray) || queueArray.length === 0) return null;
+    const len = queueArray.length;
+    const sums = {
+        timestamp: 0,
+        cpuPercent: 0,
+        memoryPercent: 0,
+        diskPercent: 0,
+        system_uptime: 0
+    };
+
+    for (let i = 0; i < len; i++) {
+        const item = queueArray[i] || {};
+        const ts = item.timestamp ? new Date(item.timestamp).getTime() : Date.now();
+        sums.timestamp += ts;
+        sums.cpuPercent += Number(item.cpuPercent || 0);
+        sums.memoryPercent += Number(item.memoryPercent || 0);
+        sums.diskPercent += Number(item.diskPercent || 0);
+        sums.system_uptime += Number(item.system_uptime || 0);
+    }
+
+    return {
+        timestamp: new Date(Math.round(sums.timestamp / len)).toISOString(),
+        cpuPercent: Number((sums.cpuPercent / len).toFixed(2)),
+        memoryPercent: Number((sums.memoryPercent / len).toFixed(2)),
+        diskPercent: Number((sums.diskPercent / len).toFixed(2)),
+        system_uptime: Number((sums.system_uptime / len).toFixed(2))
+    };
+}
+
 app.post('/api/metrics', async (req, res) => {
     const payloads = Array.isArray(req.body) ? req.body : [req.body];
 
     try {
-        for (const payload of payloads) {
-            const { timestamp, cpuUsage, memory, disk, system_uptime } = payload || {};
 
-            if (cpuUsage === undefined || memory === undefined || disk === undefined) {
-                return res.status(400).json({ error: 'Missing required metric fields' });
-            }
-
-            await pool.query(
-                `INSERT INTO server_health (
+        const aggregated = aggregateQueueMetrics(payloads);
+        await pool.query(
+            `INSERT INTO server_health (
                     time,
                     cpu_usage,
-                    memory_total_bytes,
-                    memory_free_bytes,
                     memory_usage_percent,
-                    disk_size_bytes,
                     disk_usage_percent,
                     system_uptime_seconds
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                [
-                    timestamp ? new Date(timestamp) : new Date(),
-                    cpuUsage,
-                    memory.totalMemory,
-                    memory.freeMemory,
-                    memory.memoryUsage,
-                    disk.diskSize,
-                    disk.diskUsage,
-                    system_uptime
-                ]
-            );
+                ) VALUES ($1, $2, $3, $4, $5)`,
+            [
+                aggregated.timestamp ? new Date(aggregated.timestamp) : new Date(),
+                aggregated.cpuPercent,
+                aggregated.memoryPercent,
+                aggregated.diskPercent,
+                aggregated.system_uptime
+            ]
+        );
 
-            const stringifiedData = JSON.stringify(payload);
-            connectedClients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(stringifiedData);
-                }
-            });
-        }
+        const stringifiedData = JSON.stringify(aggregated);
+        connectedClients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(stringifiedData);
+            }
+        });
 
         return res.status(202).json({ status: 'Metrics stored and broadcasted' });
     } catch (error) {
         console.error('DB insert failed:', error);
         return res.status(500).json({ error: 'Failed to save metrics' });
+    }
+});
+
+
+app.post('/api/metrics/ws', async (req, res) => {
+    const payload = req.body
+
+    try {
+        const stringifiedData = JSON.stringify(payload);
+        connectedClients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(stringifiedData);
+            }
+        });
+
+        return res.status(202).json({ status: 'Metrics stored and broadcasted' });
+    } catch (error) {
+        console.error('ws unable to stream data:', error);
+        return res.status(500).json({ error: 'Failed to stream metrics' });
     }
 });
 
@@ -263,12 +300,9 @@ app.get('/api/reports/download-24h', async (req, res) => {
     }
 });
 
-// Start the unified server on port 3000
-// For Docker: Binds to 0.0.0.0:3000 (allows inter-container communication)
-// Security via SSH tunnel + no port exposure in docker-compose
-// For bare server: Would use 127.0.0.1:3000 instead
+
 const bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'; // Docker default
-const port = 3000;
-server.listen(3030, () => {
+const port = 3030;
+server.listen(port, () => {
     console.log(`Ingestion server listening on http://${bindAddress}:${port} (SSH tunnel only)`);
 });

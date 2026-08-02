@@ -1,12 +1,10 @@
 import { cpus as _cpus, totalmem, freemem, uptime as _uptime } from 'os';
 import { statfs } from 'node:fs/promises';
-
-// Allow overriding the target API URL via environment (set in docker-compose as API_URL)
-// Inside Docker container: http://localhost:3000/api/metrics (same container network)
-// On remote server: http://127.0.0.1:3000/api/metrics (localhost only bindings)
 const URL = process.env.API_URL || 'http://localhost:3030/api/metrics'
 
-const interval = 2000 // 18000 seconds / 30 mins
+const interval = 2000
+const HOUR_MS = 60 * 60 * 1000;
+let isPostingQueue = false;
 
 function cpuIdle() {
     const cpus = _cpus();
@@ -56,6 +54,48 @@ const diskSize = await getDiskSize()
 const totalMemory = totalmem()
 let localQueue = [];
 
+
+const getMsUntilNextHour = () => {
+    const now = new Date();
+    const nextHour = new Date(now);
+    nextHour.setMinutes(0, 0, 0);
+    nextHour.setHours(nextHour.getHours() + 1);
+    return nextHour.getTime() - now.getTime();
+};
+
+const flushQueue = async () => {
+    if (isPostingQueue || localQueue.length === 0) {
+        return;
+    }
+
+    isPostingQueue = true;
+    try {
+        const queueToSend = localQueue;
+        const response = await fetch(URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(queueToSend)
+        })
+        if (response?.ok) {
+            localQueue = [];
+        }
+    } finally {
+        isPostingQueue = false;
+    }
+};
+
+const startHourlyQueueFlush = () => {
+    const delay = getMsUntilNextHour();
+    setTimeout(async () => {
+        await flushQueue();
+        setInterval(flushQueue, HOUR_MS);
+    }, delay);
+};
+
+startHourlyQueueFlush()
+
 const intervalId = setInterval(async () => {
     const cpuUsage = await getCpuUsage()
 
@@ -66,56 +106,40 @@ const intervalId = setInterval(async () => {
     const memoryUsage = (100 - ((freeMemory / totalMemory) * 100))
 
     const uptime = _uptime()
-    console.log(`Total Number of memory used: ${memoryUsage}%, total cpu usage ${cpuUsage}%, avaialble bytes ${diskUsage}, total bytes ${diskSize}, storage used ${diskUsage}%, Taken at ${new Date()}, `);
+    console.log(`Total Number of memory used: ${memoryUsage}%, total cpu usage ${cpuUsage}%, available bytes ${diskavailable}, total bytes ${diskSize}, storage used ${diskUsage}%, Taken at ${new Date()}`);
 
     let payload = {
         timestamp: new Date(),
-        cpuUsage: cpuUsage,
+        cpuPercent: cpuUsage,
         memory: { totalMemory: totalMemory, freeMemory: freeMemory, memoryUsage: memoryUsage },
-        disk: { diskUsage: diskUsage, diskSize: diskSize, diskUsage: diskUsage },
+        memoryPercent:memoryUsage,
+        disk: { diskUsage: diskUsage, diskSize: diskSize },
+        diskPercent:diskUsage,
         system_uptime: uptime
     };
 
-    (async () => {
-        try {
-            if (localQueue.length > 0) {
-                console.log("sending existing backlog payload")
-                const response = await fetch(URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(localQueue)
-                })
-                if (response.ok) {
-                    localQueue = [] //local queue needs to be flushed after pushed
-                }
-            }
-            const response = await fetch(URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            })
+    console.log(payload)
+    localQueue.push(payload)
+    
+    // Stream most recent metric in real-time
+    try {
+        console.log(`Queue size: ${localQueue.length}, Time until flush: ${getMsUntilNextHour()}ms`)
+        await fetch('http://localhost:3030/api/metrics/ws', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        })
+    } catch (e) {
+        console.error('Error streaming metric:', e.message);
+    }
+    
+    // Maintain queue size limit
+    if (localQueue.length >= 3600) {
+        localQueue.shift();
+        console.warn('Queue limit reached! Dropped oldest metric.');
+    }
 
-            if (!response.ok) {
-                console.error(`Server responded with status ${response.status}; stopping metrics interval.`)
-            }
-
-            console.log(`Metrics sent with status ${response.status}`)
-        } catch (e) {
-            const MAX_QUEUE_SIZE = 10000 //average around 5.5 hours of data that can be saved - can be scaled using a local database to save it all before pushing to main server
-            console.error('Error sending metrics;', (e.message), '; Payload backlogged')
-            if (localQueue.length >= MAX_QUEUE_SIZE) {
-                // Drop the OLDEST data point to free up space
-                localQueue.shift();
-                console.warn('Queue limit reached! Dropped oldest metric to save RAM.');
-            }
-            localQueue.push(payload)
-            // console.log(localQueue)
-
-        }
-    })()
 
 }, interval);
