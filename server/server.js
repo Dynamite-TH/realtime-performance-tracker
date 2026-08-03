@@ -35,7 +35,7 @@ const pool = new Pool({
 });
 // console.log(typeof process.env.DB_PASSWORD, process.env.DB_PASSWORD);
 const app = express();
-app.use(json()); // Middleware to parse incoming JSON payloads
+app.use(json({ limit: '5mb' })); // Middleware to parse incoming JSON payloads
 
 // Serve client static files when present (so the app container can serve the UI)
 const clientDir = path.join(__dirname, '..', 'client');
@@ -98,6 +98,22 @@ function aggregateQueueMetrics(queueArray) {
     };
 }
 
+async function sendErrorAlert(subject, message) {
+    const mailOptions = {
+        from: `"Server Monitor" <${process.env.ICLOUD_EMAIL}>`,
+        to: process.env.ICLOUD_EMAIL, // Sending to yourself
+        subject: `🚨 Server Alert: ${subject}`,
+        text: message,
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Alert email sent successfully:', info.messageId);
+    } catch (error) {
+        console.error('Failed to send alert email:', error);
+    }
+}
+
 app.post('/api/metrics', async (req, res) => {
     const payloads = Array.isArray(req.body) ? req.body : [req.body];
 
@@ -121,13 +137,6 @@ app.post('/api/metrics', async (req, res) => {
             ]
         );
 
-        const stringifiedData = JSON.stringify(aggregated);
-        connectedClients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(stringifiedData);
-            }
-        });
-
         return res.status(202).json({ status: 'Metrics stored and broadcasted' });
     } catch (error) {
         console.error('DB insert failed:', error);
@@ -137,9 +146,13 @@ app.post('/api/metrics', async (req, res) => {
 
 
 app.post('/api/metrics/ws', async (req, res) => {
-    const payload = req.body
+    const payload = Array.isArray(req.body) ? req.body.at(-1) : req.body;
 
     try {
+        if (!payload) {
+            return res.status(400).json({ error: 'Missing metric payload' });
+        }
+
         const stringifiedData = JSON.stringify(payload);
         connectedClients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
@@ -181,16 +194,17 @@ app.get('/api/reports/download-24h', async (req, res) => {
     try {
         const { rows } = await pool.query(
             `SELECT
-                hourly_bucket,
-                record_count,
-                avg_cpu,
-                max_cpu,
-                avg_memory,
-                avg_disk,
-                avg_uptime
-            FROM server_health_hourly_avg
-            WHERE hourly_bucket >= $1 AND hourly_bucket < $2
-            ORDER BY hourly_bucket desc`,
+                date_trunc('hour', time) AS hourly_bucket,
+                COUNT(*) AS record_count,
+                AVG(cpu_usage) AS avg_cpu,
+                MAX(cpu_usage) AS max_cpu,
+                AVG(memory_usage_percent) AS avg_memory,
+                AVG(disk_usage_percent) AS avg_disk,
+                AVG(system_uptime_seconds) AS avg_uptime
+            FROM server_health
+            WHERE time >= $1 AND time < $2
+            GROUP BY hourly_bucket
+            ORDER BY hourly_bucket DESC`,
             [startTime, endTime]
         );
 
@@ -300,9 +314,16 @@ app.get('/api/reports/download-24h', async (req, res) => {
     }
 });
 
+app.use((err, req, res, next) => {
+    if (err?.type === 'entity.too.large') {
+        return res.status(413).json({ error: 'Payload too large. Reduce batch size or increase server limit.' });
+    }
+    return next(err);
+});
+
 
 const bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'; // Docker default
 const port = 3030;
-server.listen(port, () => {
+server.listen(port, bindAddress, () => {
     console.log(`Ingestion server listening on http://${bindAddress}:${port} (SSH tunnel only)`);
 });
