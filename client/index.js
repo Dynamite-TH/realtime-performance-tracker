@@ -4,7 +4,7 @@
 // On the client, always connect to http://localhost:3000 which maps through the tunnel
 
 const determineWebSocketUrl = () => {
-    // Always use localhost for SSH tunnel - do NOT use remote hostname here
+    // Use the same host that served this page (works for localhost, IP, hostname, or SSH tunnel)
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const wsUrl = `${protocol}://localhost:3000`;
     return wsUrl;
@@ -133,7 +133,7 @@ function connect() {
     socket.addEventListener('message', (event) => {
         const data = JSON.parse(event.data);
 
-        cpuUsageEl.textContent = formatPercent(data.cpuUsage);
+        cpuUsageEl.textContent = formatPercent(data.cpuPercent);
         latestFreeMemory = data.memory?.freeMemory;
         latestTotalMemory = data.memory?.totalMemory;
         renderMemoryUsage();
