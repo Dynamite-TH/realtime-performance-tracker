@@ -7,7 +7,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 import PDFDocument from 'pdfkit';
-
+import cron from 'node-cron';
 
 
 // dotenv file reader (prefer Docker / environment variables)
@@ -90,11 +90,12 @@ function aggregateQueueMetrics(queueArray) {
     }
 
     return {
-        timestamp: new Date(Math.round(sums.timestamp / len)).toISOString(),
+        timestamp: new Date(),
         cpuPercent: Number((sums.cpuPercent / len).toFixed(2)),
         memoryPercent: Number((sums.memoryPercent / len).toFixed(2)),
         diskPercent: Number((sums.diskPercent / len).toFixed(2)),
-        system_uptime: Number((sums.system_uptime / len).toFixed(2))
+        system_uptime: Number((sums.system_uptime / len).toFixed(2)),
+        data_samples: len
     };
 }
 
@@ -114,6 +115,24 @@ async function sendErrorAlert(subject, message) {
     }
 }
 
+async function deleteDatabaseData() {
+    try {
+        console.log(`[${new Date().toISOString()}] Starting scheduled database cleanup...`);
+
+        await pool.query(`DELETE FROM server_health WHERE time < NOW() - INTERVAL '7 days'`)
+
+        console.log(`[${new Date().toISOString()}] Cleanup completed successfully.`);
+    } catch (error) {
+        console.error('Error deleting database data:', error);
+    }
+}
+
+cron.schedule('0 0 * * *', () => {
+    deleteDatabaseData();
+});
+
+console.log('Cleanup scheduler initialized. Running every day at midnight...');
+
 app.post('/api/metrics', async (req, res) => {
     const payloads = Array.isArray(req.body) ? req.body : [req.body];
 
@@ -126,14 +145,16 @@ app.post('/api/metrics', async (req, res) => {
                     cpu_usage,
                     memory_usage_percent,
                     disk_usage_percent,
-                    system_uptime_seconds
-                ) VALUES ($1, $2, $3, $4, $5)`,
+                    system_uptime_seconds,
+                    data_samples
+                ) VALUES ($1, $2, $3, $4, $5, $6)`,
             [
                 aggregated.timestamp ? new Date(aggregated.timestamp) : new Date(),
                 aggregated.cpuPercent,
                 aggregated.memoryPercent,
                 aggregated.diskPercent,
-                aggregated.system_uptime
+                aggregated.system_uptime,
+                aggregated.data_samples,
             ]
         );
 
@@ -272,27 +293,44 @@ app.get('/api/reports/download-24h', async (req, res) => {
             doc.fontSize(12).fillColor('black').text('Data from last 24 hours', {
                 align: 'center'
             });
+
             const startX = 40;
             const colWidths = [112, 55, 65, 65, 70, 65, 70];
             const headers = ['Hour', 'Samples', 'Avg CPU Usage', 'Max CPU Usage', 'Avg Memory Usage', 'Avg Disk Usage', 'Avg Uptime'];
+            const rowHeight = 30;
+            const pageHeightLimit = 750; // Triggers new page before hitting the bottom margin
 
             let currentY = doc.y;
-            const drawRow = (values, isHeader = false) => {
-                let x = startX;
-                const rowHeight = 30;
 
+            const drawRow = (values, isHeader = false) => {
+                // If adding another row exceeds the page height limit, create a new page
+                if (!isHeader && currentY + rowHeight > pageHeightLimit) {
+                    doc.addPage();
+                    currentY = 40; // Reset Y coordinate to the top margin
+
+                    // Re-render table headers at top of new page
+                    drawRow(headers, true);
+                }
+
+                let x = startX;
                 values.forEach((value, i) => {
                     doc.rect(x, currentY, colWidths[i], rowHeight).stroke('#cbd5e1');
                     doc.fontSize(isHeader ? 9 : 8.5)
                         .fillColor(isHeader ? '#0f172a' : '#1f2937')
-                        .text(String(value), x + 4, currentY + 6, { width: colWidths[i] - 8, ellipsis: true });
+                        .text(String(value), x + 4, currentY + 6, {
+                            width: colWidths[i] - 8,
+                            ellipsis: true
+                        });
                     x += colWidths[i];
                 });
 
                 currentY += rowHeight;
             };
 
+            // Draw initial table headers
             drawRow(headers, true);
+
+            // Render all dynamic data rows
             rows.forEach((row) => {
                 drawRow([
                     formatLocalHour(row.hourly_bucket),
